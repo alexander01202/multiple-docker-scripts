@@ -1,0 +1,36 @@
+services:
+  rentals:
+    build: ./rentals
+    image: 'app_notis_scraping_rentals_image'
+    container_name: 'app_notis_scraping_rentals_container'
+    ports:
+      - "3122:3122"
+    expose:
+      - "3122"
+    environment:
+      - BACKEND_URL=${BACKEND_URL}
+      - OPENAI_KEY=${OPENAI_KEY}
+    secrets:
+      - OPENAI_KEY
+
+  jobs:
+    build: ./jobs
+    image: 'app_notis_scraping_jobs_image'
+    container_name: 'app_notis_scraping_jobs_container'
+    ports:
+      - "3121:3121"
+    expose:
+      - "3121"
+    environment:
+      - BACKEND_URL=${BACKEND_URL}
+      - OPENAI_KEY=${OPENAI_KEY}
+    secrets:
+      - OPENAI_KEY
+
+secrets:
+  LOGIN_SECRET_KEY:
+    file: admin_login_secret_key.txt
+  OPENAI_KEY:
+    file: openai_api_key.txt
+  MONGODB_URI:
+    file: mongo_db_uri.txt

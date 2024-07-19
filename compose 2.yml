@@ -1,0 +1,26 @@
+services:
+  db:
+    build:
+      context: "."
+      secrets:
+        - MONGODB_URI
+        - LOGIN_SECRET_KEY
+    image: 'admin_app_notis_backend_image'
+    container_name: 'admin_app_notis_backend_container'
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    environment:
+      - DEVELOPMENT=False
+      - MONGODB_URI=${MONGODB_URI}
+      - LOGIN_SECRET_KEY=${LOGIN_SECRET_KEY}
+    secrets:
+      - MONGODB_URI
+      - LOGIN_SECRET_KEY
+
+secrets:
+  LOGIN_SECRET_KEY:
+    file: "admin_login_secret_key.txt"
+  MONGODB_URI:
+    file: "mongo_db_uri.txt"

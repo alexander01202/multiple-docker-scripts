@@ -1,0 +1,65 @@
+# Use official Python image as the base image
+FROM python:3.9
+
+RUN apt-get update \
+    && apt-get install -y \
+        wget \
+        gnupg \
+        build-essential \
+        xvfb \
+        tzdata \
+        openssh-server \
+        unzip \
+        cron \
+        curl \
+        npm \
+        vim \
+        postgresql-client \
+        libpq-dev \
+        libffi-dev \
+    && echo "Etc/GMT-4" > /etc/timezone \
+    && dpkg-reconfigure -f noninteractive tzdata \
+    && npm install -g pm2 \
+    && if [ ! -e /usr/local/bin/pm2 ]; then ln -s /usr/local/lib/node_modules/pm2/bin/pm2 /usr/local/bin/pm2; fi
+
+# Set the working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Copy the requirements file into the container
+COPY requirements.txt .
+
+# Install any required dependencies
+RUN pip install -r requirements.txt
+
+# Copy the rest of the application code into the container
+COPY . .
+
+# Copy the entrypoint script into the container
+COPY entrypoint.sh /usr/local/bin/
+
+# Set the permissions for the entrypoint script
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+RUN mkdir /var/run/sshd
+
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i /"^PermitRootLogin.*$"/d /etc/ssh/sshd_config
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
+EXPOSE 22
+
+RUN su -
+RUN echo "root:xxxxxxxxxxxx" | chpasswd
+
+# Copy the process.yml file into the container
+COPY process.yml .
+
+RUN apt update -y && apt install libgl1-mesa-glx sudo chromium chromium-driver -y
+
+# Run the entrypoint script when the container starts
+CMD /usr/local/bin/entrypoint.sh
